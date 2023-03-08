@@ -7,6 +7,7 @@ exports.resolvers = {
         ...usersResolvers.Query,
     },
     Mutation: {
+        ...postsResolvers.Mutation,
         ...usersResolvers.Mutation,
     },
 };
