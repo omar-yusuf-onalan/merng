@@ -13,6 +13,10 @@ const server = await new ApolloServer({
 
 const { url } = await startStandaloneServer(server, {
     listen: { port: 5000 },
+    context: async ({ req, res }) => {
+        const token = req.headers.authorization || '';
+        return { token };
+    },
 });
 
 mongoose.connect(mongoConnect.MONGODB, { useNewUrlParser: true }).then(() => {
