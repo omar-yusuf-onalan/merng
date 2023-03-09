@@ -1,5 +1,4 @@
 const Post = require('../../models/Post');
-const User = require('../../models/User');
 const checkAuth = require('../../util/checkAuth');
 
 module.exports = {
@@ -28,12 +27,11 @@ module.exports = {
     Mutation: {
         async deletePost(_, { postId }, context) {
             try {
-                const tokenInfo = checkAuth(context);
-                const user = await User.findById(tokenInfo.id);
+                const user = checkAuth(context);
                 const post = await Post.findById(postId);
 
                 if (user.username === post.username) {
-                    await Post.findByIdAndDelete(postId);
+                    await post.deleteOne();
                     return 'Post deleted successfully';
                 } else {
                     throw new Error('Action not allowed');
@@ -43,8 +41,7 @@ module.exports = {
             }
         },
         async createPost(_, { body }, context) {
-            const tokenInfo = checkAuth(context);
-            const user = await User.findById(tokenInfo.id);
+            const user = checkAuth(context);
 
             if (body.trim() === '') {
                 throw new Error('Post body must not be empty');
@@ -58,6 +55,26 @@ module.exports = {
             });
 
             return post;
+        },
+        async likePost(_, { postId }, context) {
+            const { username } = checkAuth(context);
+
+            const post = await Post.findById(postId);
+            if (post) {
+                if (post.likes.find((like) => like.username === username)) {
+                    // Post already likes, unlike it
+                    post.likes = post.likes.filter((like) => like.username !== username);
+                } else {
+                    // Not liked, like post
+                    post.likes.push({
+                        username,
+                        createdAt: new Date().toISOString(),
+                    });
+                }
+
+                await post.save();
+                return post;
+            } else throw new UserInputError('Post not found');
         },
     },
 };
